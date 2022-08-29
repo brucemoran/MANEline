@@ -12,7 +12,6 @@ def helpMessage() {
   Mandatory arguments:
 
     -profile        [str]       Configuration profile
-                                (required: singularity)
 
     --assembly      [str]       Either GRCh37 or GRCh38 (default)
 
@@ -35,7 +34,7 @@ if (params.assembly != "GRCh38" || params.assembly != "GRCh37"){
 
 process Download {
 
-  label 'low_mem'
+  label 'process_low'
   publishDir "${params.outDir}/downloads", mode: "copy"
 
   output:
@@ -60,7 +59,7 @@ Channel.fromPath( "${params.bedFile}" ).set( bed_file )
 
 process Bedparse {
 
-  label 'low_mem'
+  label 'process_low'
   publishDir "${params.outDir}/bed", mode: "copy"
 
   input:
@@ -84,7 +83,7 @@ process Bedparse {
 process Liftover {
 
   conda 'ucsc-liftover'
-  label 'low_mem'
+  label 'process_low'
   publishDir "${params.outDir}/liftover", mode: "copy"
 
   input:
