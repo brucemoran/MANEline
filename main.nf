@@ -40,6 +40,7 @@ process Download {
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
   file('vers.txt') into vers_get
+  val(grch_vers) into grchvers
 
   script:
   def mane_base = params.mane_base
@@ -62,13 +63,14 @@ process GtfBed {
   input:
   tuple file(gtf_gz), file(sum_gtf) from bed_gtf
   val(vers) from vers_mane
+  val(grch_vers) from grchvers
 
   output:
   file("${grch_vers}.MANE.${vers}.gtf.bed") into lift_bed
   val(vers) into vers_mane_1
+  val(grch_vers) into grchvers_1
 
   script:
-  def grch_vers = params.assembly
   """
   ##create MANE bedfile
   gunzip -c ${gtf_gz} | sed 's/\"//g' | sed 's/;//g' | \\
@@ -86,14 +88,14 @@ process Liftover {
   input:
   val(vers) from vers_mane_1
   file(bed) from lift_bed
+  val(grch_vers) from grchvers_1
 
   output:
   file("${grch_vers}.lift.MANE.${vers}.gtf.bed") into lifted_bed
   val(vers) into vers_mane_2
+  val(grch_vers) into grchvers_2
 
   script:
-
-  def grch_vers = params.assembly
   def hgTohg = "hg38ToHg19"
   def hg = "hg19"
   if(params.assembly == "GRCh37")
@@ -121,12 +123,12 @@ if( params.bedFile != null ){
     val(vers) from vers_mane_2
     file(bed_lift) from lifted_bed
     file(bed_over) from bed_file
+    val(grch_vers) from grchvers_2
 
     output:
     file("${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed") into complete
 
     script:
-    def grch_vers = params.assembly
     """
     ##overlap
     perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_over} ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
