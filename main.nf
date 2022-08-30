@@ -61,10 +61,11 @@ process GtfBed {
 
   input:
   tuple file(gtf_gz), file(sum_gtf) from bed_gtf
-  val(vers) from Channel.value(vers_mane)
+  val(vers) from vers_mane
 
   output:
   file("${grch_vers}.MANE.${vers}.gtf.bed") into lift_bed
+  val(vers) into vers_mane_1
 
   script:
   def grch_vers = params.assembly
@@ -83,11 +84,12 @@ process Liftover {
   publishDir "${params.outDir}/liftover", mode: "copy"
 
   input:
-  val(vers) from Channel.value(vers_mane)
+  val(vers) from vers_mane_1
   file(bed) from lift_bed
 
   output:
   file("${grch_vers}.lift.MANE.${vers}.gtf.bed") into lifted_bed
+  val(vers) into vers_mane_2
 
   script:
 
@@ -116,7 +118,7 @@ if( params.bedFile != null ){
     publishDir "${params.outDir}/liftover", mode: "copy"
 
     input:
-    val(vers) from Channel.value(vers_mane)
+    val(vers) from vers_mane_2
     file(bed_lift) from lifted_bed
     file(bed_over) from bed_file
 
