@@ -28,7 +28,7 @@ def helpMessage() {
 }
 
 if (params.help) exit 0, helpMessage()
-if (params.assembly != "GRCh38" || params.assembly != "GRCh37"){
+if (params.assembly != "GRCh38" && params.assembly != "GRCh37"){
   exit 1, "Please define --assembly as either GRCh37 or GRCh38"
 }
 
