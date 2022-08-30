@@ -123,6 +123,7 @@ process Liftover {
   def hgTohg = params.assembly == "GRCh37" ? "hg19ToHg38" : null
   def hg = params.assembly == "GRCh37" ? "hg19" : null
   """
+  echo "nameserver 8.8.8.8" > /tmp/resolv.conf
   wget http://hgdownload.cse.ucsc.edu/goldenPath/${hg}/liftOver/${hgTohg}.over.chain.gz
   liftOver ${bed} ${hgTohg}.over.chain.gz ${grch_vers}.lift.bed unmapped
 
