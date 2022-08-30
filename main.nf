@@ -63,7 +63,7 @@ if( params.bedFile != null ){
     publishDir "${params.outDir}/downloads", mode: "copy"
 
     output:
-    file("${grch_vers}.bed") into bed_file
+    file('*.bed') into bed_file
     file("README_GRCh_bed.txt") into readme
 
     script:
