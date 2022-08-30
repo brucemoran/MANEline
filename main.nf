@@ -72,6 +72,7 @@ if( params.bedFile != null ){
     """
     wget -O fasta.gz ${dlink}
     gunzip -c fasta.gz | \\
+      grep ">" | \\
       grep -v ">[GH]" | \\
       perl -ane 'chomp; @s=split(/:/); print "\$s[4]\\t\$s[5]\\t\$s[3]\\n";' \\
       > ${grch_vers}.bed
