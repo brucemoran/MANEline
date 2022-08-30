@@ -77,6 +77,7 @@ if( params.bedFile != null ){
       perl -ane 'chomp; @s=split(/:/); print "\$s[4]\\t\$s[5]\\t\$s[3]\\n";' \\
       > ${grch_vers}.bed
     echo -e "Command to download fasta from which BED was made:\\nwget ${dlink}" > README_GRCh_bed.txt
+    rm fasta.gz
     """
   }
 }
