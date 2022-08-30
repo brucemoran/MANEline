@@ -1,0 +1,9 @@
+name: MANEline
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - perl=5.26.2=h36c2ea0_1008
+  - ucsc-liftover=377=h0b8a92a_3
+prefix: /opt/miniconda/envs/MANEline
