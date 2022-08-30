@@ -37,9 +37,6 @@ process Download {
   label 'process_low'
   publishDir "${params.outDir}/downloads", mode: "copy"
 
-  input:
-  val(grch_vers) from grch_ver
-
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
   file('vers.txt') into vers_get
