@@ -11,7 +11,7 @@ def helpMessage() {
 
   Mandatory arguments:
 
-    -profile        [str]       Configuration profile
+    -profile        [str]       Configuration profile (required: singularity)
 
     --assembly      [str]       Either GRCh37 or GRCh38 (default)
 
@@ -107,7 +107,6 @@ process Bedparse {
 
 process Liftover {
 
-  conda 'ucsc-liftover'
   label 'process_low'
   publishDir "${params.outDir}/liftover", mode: "copy"
 
