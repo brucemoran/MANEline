@@ -54,7 +54,7 @@ process Download {
 }
 
 vers_get.map { it.text.strip() }.set{ vers_mane }
-if( ${params.bedFile} != null ){
+if( params.bedFile != null ){
   Channel.fromPath( "${params.bedFile}" ).set( bed_file )
 } else {
   process FastaBed {
