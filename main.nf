@@ -37,10 +37,13 @@ process Download {
   label 'process_low'
   publishDir "${params.outDir}/downloads", mode: "copy"
 
+  input:
+  val(grch_vers) from grch_ver
+
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
   file('vers.txt') into vers_get
-  val(grch_vers) into grchvers
+  file('grch_vers.txt') into grch_get
 
   script:
   def mane_base = params.mane_base
@@ -51,10 +54,13 @@ process Download {
   wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.ensembl_genomic.gtf.gz
   wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.summary.txt.gz
   echo \$VERS > vers.txt
+  echo ${grch_vers} > grch_vers.txt
   """
 }
 
 vers_get.map { it.text.strip() }.set{ vers_mane }
+grch_get.map { it.text.strip() }.set{ grch_vers }
+
 process GtfBed {
 
   label 'process_low'
@@ -63,7 +69,7 @@ process GtfBed {
   input:
   tuple file(gtf_gz), file(sum_gtf) from bed_gtf
   val(vers) from vers_mane
-  val(grch_vers) from grchvers
+  val(grch_vers) from grch_vers
 
   output:
   file("${grch_vers}.MANE.${vers}.gtf.bed") into lift_bed
