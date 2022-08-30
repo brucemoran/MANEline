@@ -105,7 +105,7 @@ process Liftover {
     """
     ##lift
     echo "nameserver 8.8.8.8" > /tmp/resolv.conf
-    wget http://hgdownload.cse.ucsc.edu/goldenPath/${hg}/liftOver/${hgTohg}.over.chain.gz
+    wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/liftOver/${hgTohg}.over.chain.gz
 
     liftOver ${bed} ${hgTohg}.over.chain.gz ${grch_vers}.lift.MANE.${vers}.gtf.bed unmapped
     """
