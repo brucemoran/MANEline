@@ -53,8 +53,7 @@ process Download {
   """
 }
 
-Channel.from( vers_get ).map { it.text.strip() }.set( vers_mane )
-
+vers_get.map { it.text.strip() }.set{ vers_mane }
 Channel.fromPath( "${params.bedFile}" ).set( bed_file )
 
 process Bedparse {
