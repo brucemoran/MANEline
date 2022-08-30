@@ -90,10 +90,11 @@ process Liftover {
   file("${grch_vers}.lift.MANE.${vers}.gtf.bed") into lifted_bed
 
   script:
-  if(params.assembly == "GRCh37")
+
   def grch_vers = params.assembly
   def hgTohg = "hg38ToHg19"
   def hg = "hg19"
+  if(params.assembly == "GRCh37")
     """
     ##lift
     echo "nameserver 8.8.8.8" > /tmp/resolv.conf
