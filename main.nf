@@ -54,7 +54,31 @@ process Download {
 }
 
 vers_get.map { it.text.strip() }.set{ vers_mane }
-Channel.fromPath( "${params.bedFile}" ).set( bed_file )
+if( ${params.bedFile} != null ){
+  Channel.fromPath( "${params.bedFile}" ).set( bed_file )
+} else {
+  process FastaBed {
+
+    label 'process_low'
+    publishDir "${params.outDir}/downloads", mode: "copy"
+
+    output:
+    file("${grch_vers}.bed") into bed_file
+    file("README_GRCh_bed.txt") into readme
+
+    script:
+    def grch_vers = params.assembly
+    def dlink = params.assembly == "GRCh37" ? "http://ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.toplevel.fa.gz" : "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz"
+    """
+    wget -O fasta.gz ${dlink}
+    gunzip -c fasta.gz | \\
+      grep -v ">[GH]" | \\
+      perl -ane 'chomp; @s=split(/:/); print "\$s[4]\\t\$s[5]\\t\$s[3]\\n";' \\
+      > ${grch_vers}.bed
+    echo -e "Command to download fasta from which BED was made:\\nwget ${dlink}" > README_GRCh_bed.txt
+    """
+  }
+}
 
 process Bedparse {
 
@@ -70,11 +94,11 @@ process Bedparse {
   script:
   """
   ##remove any non-chr, coord lines in top of file
-  CHR=\$(tail -n1 ${level_bed} | perl -ane 'print \$F[0];')
+  CHR=\$(tail -n1 ${bed} | perl -ane 'print \$F[0];')
   if [[ \$CHR =~ "chr" ]]; then
-    perl -ane 'if(\$F[0]=~m/^chr/){print \$_;}' ${level_bed} > parsed.bed
+    perl -ane 'if(\$F[0]=~m/^chr/){print \$_;}' ${bed} > parsed.bed
   else
-    perl -ane 'if(\$F[0]=~m/^[0-9MXY]/){print \$_;}' ${level_bed} > parsed.bed
+    perl -ane 'if(\$F[0]=~m/^[0-9MXY]/){print \$_;}' ${bed} > parsed.bed
   fi
   """
 }
@@ -94,14 +118,14 @@ process Liftover {
   file("*") into complete
 
   script:
-  if( params.assembly == "GRCh37" )
-  def hgTohg = params.levelAssembly == "GRCh37" ? "hg19ToHg38" : null
-  def hg = params.levelAssembly == "GRCh37" ? "hg19" : null
+  def grch_vers = params.assembly
+  def hgTohg = params.assembly == "GRCh37" ? "hg19ToHg38" : null
+  def hg = params.assembly == "GRCh37" ? "hg19" : null
   """
   wget http://hgdownload.cse.ucsc.edu/goldenPath/${hg}/liftOver/${hgTohg}.over.chain.gz
-  liftOver ${level_bed} ${hgTohg}.over.chain.gz ${params.levelTag}.lift.bed unmapped
+  liftOver ${bed} ${hgTohg}.over.chain.gz ${grch_vers}.lift.bed unmapped
 
   echo -r"Liftover using:\\nwget http://hgdownload.cse.ucsc.edu/goldenPath/${hg}/liftOver/${hgTohg}.over.chain.gz
-  liftOver ${level_bed} ${hgTohg}.over.chain.gz ${params.levelTag}.lift.bed unmapped" >> README.txt
+  liftOver ${bed} ${hgTohg}.over.chain.gz ${grch_vers}.lift.bed unmapped" >> README.txt
   """
 }
