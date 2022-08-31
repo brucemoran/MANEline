@@ -146,7 +146,6 @@ if( params.bedFile != null ){
     input:
     val(vers) from vers_mane_2
     file(bed_lift) from lifted_bed
-    file(bed_over) from bed_file
     val(grch_vers) from grchvers_2
 
     output:
