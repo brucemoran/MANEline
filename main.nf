@@ -137,4 +137,25 @@ if( params.bedFile != null ){
     perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_over} ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
     """
   }
+} else {
+
+  process Finish {
+    label 'process_low'
+    publishDir "${params.outDir}/liftover", mode: "copy"
+
+    input:
+    val(vers) from vers_mane_2
+    file(bed_lift) from lifted_bed
+    file(bed_over) from bed_file
+    val(grch_vers) from grchvers_2
+
+    output:
+    file("${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed") into complete
+
+    script:
+    """
+    ##overlap
+    perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_lift} ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
+    """
+  }
 }
