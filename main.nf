@@ -33,6 +33,10 @@ if (params.help) exit 0, helpMessage()
 if (params.assembly != "GRCh38" && params.assembly != "GRCh37"){
   exit 1, "Please define --assembly as either GRCh37 or GRCh38"
 }
+timeline.file = "${params.outDir}/pipeline_info/MANEline.timeline.html"
+report.file = "${params.outDir}/pipeline_info/MANEline.report.html"
+trace.file = "${params.outDir}/pipeline_info/MANEline.trace.txt"
+dag.file = "${params.outDir}/pipeline_info/MANEline.dag.svg"
 
 process Download {
 
