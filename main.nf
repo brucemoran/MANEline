@@ -22,6 +22,8 @@ def helpMessage() {
     --bedFile       [str]       Path to BED file of regions to annotate with
                                 MANE (ENS, REF transcript ID, gene name). If none given, all 'gene' entires will be used to create a 'full' BED of MANE transcripts and their coordinates and annotations.
 
+    --outDir        [str]       Path to save 'output' and 'pipeline_info' directories
+
     --email         [str]       Email address to send reports
 
     """.stripIndent()
@@ -31,7 +33,6 @@ if (params.help) exit 0, helpMessage()
 if (params.assembly != "GRCh38" && params.assembly != "GRCh37"){
   exit 1, "Please define --assembly as either GRCh37 or GRCh38"
 }
-params.outDir = "output"
 
 process Download {
 
@@ -135,7 +136,8 @@ if( params.bedFile != null ){
     script:
     """
     ##overlap
-    perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_over} ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
+    perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_over} 1
+    uniq 1 > ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
     """
   }
 } else {
@@ -155,7 +157,39 @@ if( params.bedFile != null ){
     script:
     """
     ##overlap
-    perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_lift} ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
+    perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_lift} 1
+    uniq 1 > ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
     """
+  }
+}
+
+if( params.email != null ){
+  workflow.onComplete {
+    sleep(100)
+    def subject = """\
+      [brucemoran/tumour_only] SUCCESS: MANEline [$workflow.runName]
+      """
+      .stripIndent()
+    if (!workflow.success) {
+        subject = """\
+          [brucemoran/tumour_only] FAILURE: MANEline [$workflow.runName]
+          """
+          .stripIndent()
+    }
+
+    def msg = """\
+      Pipeline execution summary
+      ---------------------------
+      RunName     : ${workflow.runName}
+      Completed at: ${workflow.complete}
+      Duration    : ${workflow.duration}
+      workDir     : ${workflow.workDir}
+      exit status : ${workflow.exitStatus}
+      """
+      .stripIndent()
+
+    sendMail(to: "${params.email}",
+             subject: subject,
+             body: msg)
   }
 }
