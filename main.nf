@@ -20,9 +20,7 @@ def helpMessage() {
                                 not release_0.91)
 
     --bedFile       [str]       Path to BED file of regions to annotate with
-                                MANE (ENS, REF transcript ID, gene name). If none given, all 'gene' entires will be used to create a 'full' BED of MANE transcripts and their coordinates and annotations.
-
-    --outDir        [str]       Path to save 'output' and 'pipeline_info' directories
+                                MANE (ENS, REF transcript ID, gene name). Default: null.
 
     --email         [str]       Email address to send reports
 
@@ -33,10 +31,6 @@ if (params.help) exit 0, helpMessage()
 if (params.assembly != "GRCh38" && params.assembly != "GRCh37"){
   exit 1, "Please define --assembly as either GRCh37 or GRCh38"
 }
-timeline.file = "${params.outDir}/pipeline_info/MANEline.timeline.html"
-report.file = "${params.outDir}/pipeline_info/MANEline.report.html"
-trace.file = "${params.outDir}/pipeline_info/MANEline.trace.txt"
-dag.file = "${params.outDir}/pipeline_info/MANEline.dag.svg"
 
 process Download {
 
@@ -85,7 +79,7 @@ process GtfBed {
   gunzip -c ${gtf_gz} | sed 's/\"//g' | sed 's/;//g' | \\
     perl -ane 'chomp; if(\$F[2] eq "transcript"){
     print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[15];\$F[9];\$F[11];\$F[23];\$F[25]\\n";}' | \\
-    sed 's/RefSeq://g' > ${grch_vers}.MANE.${vers}.gtf.bed
+    sed 's/RefSeq://g' > GRCh38.MANE.${vers}.gtf.bed
   """
 }
 
@@ -113,11 +107,11 @@ process Liftover {
     echo "nameserver 8.8.8.8" > /tmp/resolv.conf
     wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/liftOver/${hgTohg}.over.chain.gz
 
-    liftOver ${bed} ${hgTohg}.over.chain.gz ${grch_vers}.lift.MANE.${vers}.gtf.bed unmapped
+    liftOver ${bed} ${hgTohg}.over.chain.gz GRCh37.lift.MANE.${vers}.gtf.bed unmapped
     """
   else
     """
-    cp ${bed} ${grch_vers}.lift.MANE.${vers}.gtf.bed
+    cp ${bed} GRCh38.lift.MANE.${vers}.gtf.bed
     """
 }
 
@@ -144,39 +138,18 @@ if( params.bedFile != null ){
     uniq 1 > ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
     """
   }
-} else {
-
-  process Finish {
-    label 'process_low'
-    publishDir "${params.outDir}/liftover", mode: "copy"
-
-    input:
-    val(vers) from vers_mane_2
-    file(bed_lift) from lifted_bed
-    val(grch_vers) from grchvers_2
-
-    output:
-    file("${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed") into complete
-
-    script:
-    """
-    ##overlap
-    perl ${workflow.projectDir}/assets/pover.pl ${bed_lift} ${bed_lift} 1
-    uniq 1 > ${grch_vers}.lift.overlap.MANE.${vers}.gtf.bed
-    """
-  }
 }
 
 if( params.email != null ){
   workflow.onComplete {
     sleep(100)
     def subject = """\
-      [brucemoran/tumour_only] SUCCESS: MANEline [$workflow.runName]
+      [brucemoran/MANEline] SUCCESS [$workflow.runName]
       """
       .stripIndent()
     if (!workflow.success) {
         subject = """\
-          [brucemoran/tumour_only] FAILURE: MANEline [$workflow.runName]
+          [brucemoran/MANEline] FAILURE [$workflow.runName]
           """
           .stripIndent()
     }
