@@ -141,6 +141,7 @@ if( params.bedFile != null ){
       uniq 1 > ${bedname}.GRCh38.overlap.MANE.${vers}.transcript.bed
       perl ${workflow.projectDir}/assets/pover.pl ${exon_just} ${bed_over} 1
       uniq 1 > ${bedname}.GRCh38.overlap.MANE.${vers}.exon.bed
+      rm 1
       """
     }
   } else {
@@ -165,6 +166,7 @@ if( params.bedFile != null ){
       uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.transcript.bed
       perl ${workflow.projectDir}/assets/pover.pl ${exon_lift} ${bed_over} 1
       uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.exon.bed
+      rm 1
       """
     }
   }
@@ -186,6 +188,7 @@ if( params.bedFile != null ){
       ##overlap
       perl ${workflow.projectDir}/assets/pcomb.pl ${txp_com} ${exon_com} 1
       uniq 1 > ${comname}
+      rm 1
       """
     }
   }
