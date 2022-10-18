@@ -178,14 +178,14 @@ if( params.bedFile != null ){
       tuple file(txp_com), file(exon_com) from complete
 
       output:
-      tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into completed
+      file("*") into completed
 
       script:
-      def comname = "${exon_com}".replace('exon', 'gene')[0]
+      def comname = "${exon_com}".replace('exon', 'txps_exon')[0]
       """
       ##overlap
-      perl ${workflow.projectDir}/assets/pcom.pl ${txp_lift} ${bed_over} 1
-      uniq 1 > ${comname}.GRCh37.overlap.MANE.${vers}.txps_exon.bed
+      perl ${workflow.projectDir}/assets/pcomb.pl ${txp_com} ${exon_com} 1
+      uniq 1 > ${comname}
       """
     }
   }
