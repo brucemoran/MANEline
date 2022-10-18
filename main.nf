@@ -181,7 +181,7 @@ if( params.bedFile != null ){
       file('*') into completed
 
       script:
-      def comname = "${exon_com}".replace('exon', 'txps_exon')[0]
+      def comname = "${exon_com}".replace('exon', 'txps_exon')
       """
       ##overlap
       perl ${workflow.projectDir}/assets/pcomb.pl ${txp_com} ${exon_com} 1
