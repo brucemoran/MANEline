@@ -119,8 +119,6 @@ process Liftover {
 
 //if a BED is supplied overlapp the created Liftover
 if( params.bedFile != null ){
-  Channel.fromPath( "${params.bedFile}" ).set( bed_file )
-
   if(params.bedAssembly == "GRCh38" ){
     process JustOverlap {
       label 'process_low'
@@ -129,7 +127,7 @@ if( params.bedFile != null ){
       input:
       file(txp_just) from just_txp_bed
       file(exon_just) from just_exon_bed
-      file(bed_over) from bed_file
+      file(bed_over) from Channel.fromPath( "${params.bedFile}" )
       val(vers) from vers_mane_2
 
       output:
@@ -153,7 +151,7 @@ if( params.bedFile != null ){
       input:
       file(txp_lift) from lifted_txp_bed
       file(exon_lift) from lifted_exon_bed
-      file(bed_over) from bed_file
+      file(bed_over) from Channel.fromPath( "${params.bedFile}" )
       val(vers) from vers_mane_2
 
       output:
