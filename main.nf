@@ -26,6 +26,8 @@ def helpMessage() {
 
     --bedAssembly   [str]       One of GRCh37, GRCh38 indicating the assembly used in --bedFile.
 
+    --combine       [bool]      Do you want to combine transcript and exon BEDs to a 'txps_exon' BED with both transcript and exon?
+
     --email         [str]       Email address to send reports
 
     """.stripIndent()
@@ -163,6 +165,27 @@ if( params.bedFile != null ){
       uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.transcript.bed
       perl ${workflow.projectDir}/assets/pover.pl ${exon_lift} ${bed_over} 1
       uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.exon.bed
+      """
+    }
+  }
+
+  if( params.combine != null ){
+    process CombineET {
+      label 'process_low'
+      publishDir "${params.outDir}/bed", mode: "copy"
+
+      input:
+      tuple file(txp_com), file(exon_com) from complete
+
+      output:
+      tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into complete
+
+      script:
+      def comname = "${exon_com}".replace('exon', 'gene')[0]
+      """
+      ##overlap
+      perl ${workflow.projectDir}/assets/pcom.pl ${txp_lift} ${bed_over} 1
+      uniq 1 > ${comname}.GRCh37.overlap.MANE.${vers}.txps_exon.bed
       """
     }
   }
