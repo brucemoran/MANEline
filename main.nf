@@ -112,7 +112,6 @@ process Liftover {
 
   liftOver ${bed_txp} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.transcript.bed unmapped
   liftOver ${bed_exon} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.exon.bed unmapped
-
   """
 }
 
@@ -133,7 +132,7 @@ if( params.bedFile != null ){
       tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into complete
 
       script:
-      def bedname = bed_over.split('.')[0]
+      def bedname = "${bed_over}".split('\\.')[0]
       """
       ##overlap
       perl ${workflow.projectDir}/assets/pover.pl ${txp_just} ${bed_over} 1
@@ -157,7 +156,7 @@ if( params.bedFile != null ){
       tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into complete
 
       script:
-      def bedname = bed_over.split('.')[0]
+      def bedname = "${bed_over}".split('\\.')[0]
       """
       ##overlap
       perl ${workflow.projectDir}/assets/pover.pl ${txp_lift} ${bed_over} 1
