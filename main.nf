@@ -178,7 +178,7 @@ if( params.bedFile != null ){
       tuple file(txp_com), file(exon_com) from complete
 
       output:
-      file("*") into completed
+      file('*') into completed
 
       script:
       def comname = "${exon_com}".replace('exon', 'txps_exon')[0]
