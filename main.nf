@@ -178,7 +178,7 @@ if( params.bedFile != null ){
       tuple file(txp_com), file(exon_com) from complete
 
       output:
-      tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into complete
+      tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into completed
 
       script:
       def comname = "${exon_com}".replace('exon', 'gene')[0]
