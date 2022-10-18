@@ -42,7 +42,6 @@ process Download {
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
   file('vers.txt') into vers_get
-  file('grch_vers.txt') into grch_get
 
   script:
   def mane_base = params.mane_base
