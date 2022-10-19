@@ -252,7 +252,7 @@ process zipup {
 
   script:
   """
-  zip -r $${params.runID}.MANEline.zip *
+  zip -r ${params.runID}.MANEline.zip *
   """
 }
 
