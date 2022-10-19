@@ -115,7 +115,7 @@ process Liftover {
   output:
   file("GRCh37.MANE.${vers}.${feat}.bed") into lifted_feat_bed
   val(vers) into vers_mane_2
-  val(feat) from feat_mane_2
+  val(feat) into feat_mane_2
 
   script:
   """
