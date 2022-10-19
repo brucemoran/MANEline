@@ -21,6 +21,8 @@ def helpMessage() {
                                 current; please only supply numeric e.g. 0.91,
                                 not release_0.91)
 
+    --feature       [str]       One of 'exon' (ENST, ENSE, exon_no.), 'transcript' (gene, ENSG, ENST, ENSP, NMID) or 'both' (transcript, then ENSE, exon_no.)
+
     --bedFile       [str]       Path to BED file of regions to annotate with
                                 MANE (ENS, REF transcript ID, gene name). Default: null.
 
@@ -44,6 +46,7 @@ process Download {
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
   file('vers.txt') into vers_get
+  file('feat.txt') into feat_get
 
   script:
   def mane_base = params.mane_base
@@ -53,11 +56,13 @@ process Download {
   wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.ensembl_genomic.gtf.gz
   wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.summary.txt.gz
   echo \$VERS > vers.txt
+  echo ${params.feature} > feat.txt
   """
 }
 
 //map version and assembly
 vers_get.map { it.text.strip() }.set{ vers_mane }
+feat_get.map { it.text.strip() }.set{ feat_mane }
 
 //parse the GTF to BED
 process GtfBed {
@@ -68,26 +73,27 @@ process GtfBed {
   input:
   tuple file(gtf_gz), file(sum_gtf) from bed_gtf
   val(vers) from vers_mane
+  val(feat) from feat_mane
 
   output:
-  file("GRCh38.MANE.${vers}.transcript.bed") into ( txp_bed, just_txp_bed )
-  file("GRCh38.MANE.${vers}.exon.bed") into ( exon_bed, just_exon_bed )
+  file("GRCh38.MANE.${vers}.${feat}.bed") into ( txp_bed, just_txp_bed )
   val(vers) into vers_mane_1
+  val(feat) into vers_mane_1
 
   script:
   """
-  ##create MANE bedfiles of transcripts (inc. gene, protein IDs), and exons (link by txp)
   gunzip -c ${gtf_gz} | sed 's/\\"//g' | sed 's/;//g' | \\
+  if [[ ${feat} == "transcript" ]]; then
     perl -ane 'chomp; if(\$F[2] eq "transcript"){
-    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[15];\$F[9];\$F[11];\$F[23];\$F[25]\\n";}' | \\
-    sed 's/RefSeq://g' > GRCh38.MANE.${vers}.transcript.bed
-
-  gunzip -c ${gtf_gz} | sed 's/\\"//g' | sed 's/;//g' | \\
+    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[23];\$F[25]\\n";}'
+  else if [[ ${feat} == "exon" ]]; then
     perl -ane 'chomp; if(\$F[2] eq "exon"){
-    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[11];\$F[23];exon_\$F[21]\\n";}' | \\
-    sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.exon.bed
+    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[11];\$F[23];exon_\$F[21]\\n";}'
+  else
+    perl -ane 'chomp; if(\$F[2] eq "exon"){
+    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[27];\$F[29];\$F[11];\$F[23];exon_\$F[21]\\n";}'
+  fi | sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.${feat}.bed
   """
-
 }
 
 //Liftover MANE to GRCh37
