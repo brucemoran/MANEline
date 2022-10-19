@@ -258,9 +258,17 @@ process zipup {
   """
   zip -r ${params.runID}.MANEline.zip *
   LSL=\$(ls -l ${params.runID}.MANEline.zip | cut -d" " -f5)
+  ##if zip too big
   if [[ \$LSL > 6000000 ]]; then
     rm ${params.runID}.MANEline.zip
-    zip -r ${params.runID}.MANEline.zip ${params.runID}.*
+    zip -r ${params.runID}.MANEline.zip * -x GRCh38*
+  fi
+  LSL=\$(ls -l ${params.runID}.MANEline.zip | cut -d" " -f5)
+  ##if zip too big
+  if [[ \$LSL > 6000000 ]]; then
+    SWRID=\$(echo ${params.runID} | cut -c -6)
+    rm ${params.runID}.MANEline.zip
+    zip -r ${params.runID}.MANEline.zip \$SWRID*
   fi
   """
 }
