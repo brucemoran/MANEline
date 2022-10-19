@@ -89,7 +89,7 @@ process GtfBed {
   val(feat) from feat_mane
 
   output:
-  file("GRCh38.MANE.${vers}.${feat}.bed") into ( feat_bed, just_feat_bed )
+  file("GRCh38.MANE.${vers}.${feat}.bed") into ( feat_bed, just_feat_bed, sendmail_mane )
   val(vers) into vers_mane_1
   val(feat) into feat_mane_1
 
@@ -181,9 +181,9 @@ if( params.bedFile != null ){
         liftOver ${bed_ass} hg38ToHg19.over.chain.gz ${bedname}.GRCh37.overlap.MANE.${vers}.${feat}.bed unmapped
         """
       }
-      sendmail_ass.set { sendmail_bed }
+      sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
     } else {
-      sendmail_over.set { sendmail_bed }
+      sendmail_over.mix(sendmail_mane).set { sendmail_beds }
     }
   } else {
     process Overlap37 {
@@ -231,9 +231,9 @@ if( params.bedFile != null ){
         liftOver ${bed_ass} hg19ToHg38.over.chain.gz ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed unmapped
         """
       }
-     sendmail_asss.set { sendmail_beds }
+      sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
     } else {
-     sendmail_over.set { sendmail_beds }
+      sendmail_over.mix(sendmail_mane).set { sendmail_beds }
     }
   }
 }

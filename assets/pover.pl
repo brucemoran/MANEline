@@ -7,7 +7,7 @@ open(BED, $ARGV[0]);
 my %regions;
 while(<BED>){
     chomp;
-    my @sp=split(/\t/, 4);
+    my @sp=split(/\t/, $_, 4);
     push(@{$regions{$sp[0]}},"$sp[1]\t$sp[2]\t$sp[3]");
 }
 close BED;
@@ -16,7 +16,7 @@ open(BED, $ARGV[1]);
 open(OUT, ">$ARGV[2]");
 while(<BED>){
     chomp;
-    my ($chr,$str,$end, $anno)=split(/\t/, $_, 4);
+    my ($chr,$str,$end,$anno)=split(/\t/, $_, 4);
     for my $key(@{$regions{$chr}}){
         my @an=split(/\t/, $key);
         ##start gt anno start, start must also be lt anno end
