@@ -22,7 +22,7 @@ def helpMessage() {
                                 current; please only supply numeric e.g. 0.91,
                                 not release_0.91)
 
-    --feature       [str]       One of 'exon' (ENST, ENSE, exon_no.), 'transcript' (gene, ENSG, ENST, ENSP, NMID) or 'txps_exon' (transcript, then ENSE, exon_no.)
+    --feature       [str]       One of 'exon' (ENST, ENSE, exon_no.), 'transcript' (gene, ENSG, ENST, ENSP, NMID) or 'txps_exon' (default: transcript, then ENSE, exon_no.)
 
     --email         [str]       Email address to send reports
 
@@ -37,8 +37,8 @@ def helpMessage() {
 
 if (params.help) exit 0, helpMessage()
 //require correct feature selection
-if(params.feature != "txps_exon" &  params.feature != "transcript" & params.feature != "exon"){
-  exit 1, "Please use one of --sampleCsv exon | transcript | txps_exon"
+if(params.feature != "txps_exon" | params.feature != "transcript" | params.feature != "exon"){
+  exit 1, "Please use one of --feature exon | transcript | txps_exon"
 }
 
 //Get GRCh38 (only assembly available) MANE GTF and summary files based on input versions required
