@@ -176,9 +176,11 @@ if( params.bedFile != null ){
         script:
         def bedname = "${bed_ass}".split('\\.')[0]
         """
+        ##count total fields as liftOver needs to know this
+        LC=\$(head -n5 ${bed_ass} | tail -n1 | perl -ane 'print scalar(@F)-2;')
         echo "nameserver 8.8.8.8" > /tmp/resolv.conf
         wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
-        liftOver ${bed_ass} hg38ToHg19.over.chain.gz ${bedname}.GRCh37.overlap.MANE.${vers}.${feat}.bed unmapped
+        liftOver -bedPlus=\$LC ${bed_ass} hg38ToHg19.over.chain.gz ${bedname}.GRCh37.overlap.MANE.${vers}.${feat}.bed unmapped
         """
       }
       sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
@@ -226,9 +228,11 @@ if( params.bedFile != null ){
         script:
         def bedname = "${bed_ass}".split('\\.')[0]
         """
+        ##count total fields as liftOver needs to know this
+        LC=\$(head -n5 ${bed_ass} | tail -n1 | perl -ane 'print scalar(@F)-2;')
         echo "nameserver 8.8.8.8" > /tmp/resolv.conf
         wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
-        liftOver ${bed_ass} hg19ToHg38.over.chain.gz ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed unmapped
+        liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed unmapped
         """
       }
       sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
