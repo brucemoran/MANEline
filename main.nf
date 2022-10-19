@@ -37,7 +37,7 @@ def helpMessage() {
 
 if (params.help) exit 0, helpMessage()
 //require correct feature selection
-if(params.feature != "txps_exon" | params.feature != "transcript" | params.feature != "exon"){
+if(params.feature != "txps_exon" || params.feature != "transcript" || params.feature != "exon"){
   exit 1, "Please use one of --feature exon | transcript | txps_exon"
 }
 
