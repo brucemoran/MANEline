@@ -11,7 +11,8 @@ def helpMessage() {
 
   Description:
 
-  Convert MANE GRCh38 annotation backwards to GRCH37. Allows supply of a BED file for which annotations are parsed and included in output BED.
+  Convert MANE GRCh38 annotation to BED format, and lift backwards to GRCH37.
+  Optionally supply a BED file for which annotations are parsed and included.
 
   Mandatory arguments:
 
@@ -21,21 +22,26 @@ def helpMessage() {
                                 current; please only supply numeric e.g. 0.91,
                                 not release_0.91)
 
-    --feature       [str]       One of 'exon' (ENST, ENSE, exon_no.), 'transcript' (gene, ENSG, ENST, ENSP, NMID) or 'both' (transcript, then ENSE, exon_no.)
+    --feature       [str]       One of 'exon' (ENST, ENSE, exon_no.), 'transcript' (gene, ENSG, ENST, ENSP, NMID) or 'txps_exon' (transcript, then ENSE, exon_no.)
+
+    --email         [str]       Email address to send reports
+
+  Optional arguments:
 
     --bedFile       [str]       Path to BED file of regions to annotate with
                                 MANE (ENS, REF transcript ID, gene name). Default: null.
 
     --bedAssembly   [str]       One of GRCh37, GRCh38 indicating the assembly used in --bedFile.
-
-    --email         [str]       Email address to send reports
-
     """.stripIndent()
 }
 
 if (params.help) exit 0, helpMessage()
+//require correct feature selection
+if(params.feature != "txps_exon" &  params.feature != "transcript" & params.feature != "exon"){
+  exit 1, "Please use one of --sampleCsv exon | transcript | txps_exon"
+}
 
-//Get GRCh38 MANE GTF and summary files based on input versions required
+//Get GRCh38 (only assembly available) MANE GTF and summary files based on input versions required
 process Download {
 
   label 'process_low'
@@ -58,7 +64,7 @@ process Download {
   """
 }
 
-//map version and assembly
+//map version and feature
 vers_get.map { it.text.strip() }.set{ vers_mane }
 feat_get.map { it.text.strip() }.set{ feat_mane }
 
@@ -81,16 +87,17 @@ process GtfBed {
   script:
   """
   gunzip -c ${gtf_gz} | sed 's/\\"//g' | sed 's/;//g' | \\
-  if [[ ${feat} == "transcript" ]]; then
-    perl -ane 'chomp; if(\$F[2] eq "transcript"){
-    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[23];\$F[25]\\n";}'
-  else if [[ ${feat} == "exon" ]]; then
-    perl -ane 'chomp; if(\$F[2] eq "exon"){
-    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[11];\$F[23];exon_\$F[21]\\n";}'
-  else
-    perl -ane 'chomp; if(\$F[2] eq "exon"){
-    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[27];\$F[29];\$F[11];\$F[23];exon_\$F[21]\\n";}'
-  fi | sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.${feat}.bed
+    if [[ ${feat} == "transcript" ]]; then
+      perl -ane 'chomp; if(\$F[2] eq "transcript"){
+      print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[23];\$F[25]\\n";}'
+    elif [[ ${feat} == "exon" ]]; then
+      perl -ane 'chomp; if(\$F[2] eq "exon"){
+      print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[11];\$F[23];exon_\$F[21]\\n";}'
+    else
+      perl -ane 'chomp; if(\$F[2] eq "exon"){
+      print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[27];\$F[29];\$F[23];exon_\$F[21]\\n";}'
+    fi | \\
+  sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.${feat}.bed
   """
 }
 
@@ -150,7 +157,7 @@ if( params.bedFile != null ){
       publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
-      file(feat_just) from just_feat_bed
+      file(feat_lift) from lifted_feat_bed
       file(bed_over) from Channel.fromPath( "${params.bedFile}" )
       val(vers) from vers_mane_2
       val(feat) from feat_mane_2
