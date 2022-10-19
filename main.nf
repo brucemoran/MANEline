@@ -224,7 +224,7 @@ if( params.bedFile != null ){
         tuple file(bed_ass), file(bed_in), file(bed_lift), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_asss
 
         script:
-        def bedname = "${bed_over}".split('\\.')[0]
+        def bedname = "${bed_ass}".split('\\.')[0]
         """
         echo "nameserver 8.8.8.8" > /tmp/resolv.conf
         wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
