@@ -54,7 +54,7 @@ if(params.feature != "txps_exon" && params.feature != "transcript" && params.fea
 process Download {
 
   label 'process_low'
-  publishDir "${params.outDir}/${params.runID}/download", mode: "copy"
+  publishDir "${params.outDir}/download", mode: "copy"
 
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
@@ -81,7 +81,7 @@ feat_get.map { it.text.strip() }.set{ feat_mane }
 process GtfBed {
 
   label 'process_low'
-  publishDir "${params.outDir}/${params.runID}/bed", mode: "copy"
+  publishDir "${params.outDir}/bed", mode: "copy"
 
   input:
   tuple file(gtf_gz), file(sum_gtf) from bed_gtf
@@ -114,7 +114,7 @@ process GtfBed {
 process Liftover {
 
   label 'process_low'
-  publishDir "${params.outDir}/${params.runID}/bed", mode: "copy"
+  publishDir "${params.outDir}/bed", mode: "copy"
 
   input:
   file(bed_feat) from feat_bed
@@ -140,7 +140,7 @@ if( params.bedFile != null ){
   if(params.bedAssembly == "GRCh38" ){
     process Overlap38 {
       label 'process_low'
-      publishDir "${params.outDir}/${params.runID}/bed", mode: "copy"
+      publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
       file(feat_just) from just_feat_bed
@@ -163,7 +163,7 @@ if( params.bedFile != null ){
     if(params.bedOtherAss){
       process OtherAss38 {
         label 'process_low'
-        publishDir "${params.outDir}/${params.runID}/bed", mode: "copy"
+        publishDir "${params.outDir}/bed", mode: "copy"
 
         input:
         tuple file(bed_ass), file(bed_in), file(bed_just) from sendmail_over
@@ -188,7 +188,7 @@ if( params.bedFile != null ){
   } else {
     process Overlap37 {
       label 'process_low'
-      publishDir "${params.outDir}/${params.runID}/bed", mode: "copy"
+      publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
       file(feat_lift) from lift_feat_bed
@@ -213,7 +213,7 @@ if( params.bedFile != null ){
     if(params.bedOtherAss){
       process OtherAss37 {
         label 'process_low'
-        publishDir "${params.outDir}/${params.runID}/bed", mode: "copy"
+        publishDir "${params.outDir}/bed", mode: "copy"
 
         input:
         tuple file(bed_ass), file(bed_in), file(bed_lift) from sendmail_over
@@ -242,7 +242,7 @@ if( params.bedFile != null ){
 process zipup {
 
   label 'low_mem'
-  publishDir "${params.outDir}/${params.runID}/bed", mode: 'copy'
+  publishDir "${params.outDir}/bed", mode: 'copy'
 
   input:
   file(send_beds) from sendmail_beds.collect()
