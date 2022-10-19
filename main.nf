@@ -259,6 +259,7 @@ process zipup {
   zip -r ${params.runID}.MANEline.zip *
   LSL=\$(ls -l ${params.runID}.MANEline.zip | cut -d" " -f5)
   if [[ \$LSL > 6000000 ]]; then
+    rm ${params.runID}.MANEline.zip
     zip -r ${params.runID}.MANEline.zip ${params.runID}.*
   fi
   """
