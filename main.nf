@@ -28,8 +28,6 @@ def helpMessage() {
 
     --bedAssembly   [str]       One of GRCh37, GRCh38 indicating the assembly used in --bedFile.
 
-    --combine       [bool]      Do you want to combine transcript and exon BEDs to a 'txps_exon' BED with both transcript and exon?
-
     --email         [str]       Email address to send reports
 
     """.stripIndent()
@@ -76,9 +74,9 @@ process GtfBed {
   val(feat) from feat_mane
 
   output:
-  file("GRCh38.MANE.${vers}.${feat}.bed") into ( txp_bed, just_txp_bed )
+  file("GRCh38.MANE.${vers}.${feat}.bed") into ( feat_bed, just_feat_bed )
   val(vers) into vers_mane_1
-  val(feat) into vers_mane_1
+  val(feat) into feat_mane_1
 
   script:
   """
@@ -103,23 +101,21 @@ process Liftover {
   publishDir "${params.outDir}/bed", mode: "copy"
 
   input:
-  file(bed_txp) from txp_bed
-  file(bed_exon) from exon_bed
+  file(bed_feat) from feat_bed
   val(vers) from vers_mane_1
+  val(feat) from feat_mane_1
 
   output:
-  file("GRCh37.MANE.${vers}.transcript.bed") into lifted_txp_bed
-  file("GRCh37.MANE.${vers}.exon.bed") into lifted_exon_bed
+  file("GRCh37.MANE.${vers}.${feat}.bed") into lifted_feat_bed
   val(vers) into vers_mane_2
+  val(feat) from feat_mane_2
 
   script:
   """
   ##lift
   echo "nameserver 8.8.8.8" > /tmp/resolv.conf
   wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
-
-  liftOver ${bed_txp} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.transcript.bed unmapped
-  liftOver ${bed_exon} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.exon.bed unmapped
+  liftOver ${bed_feat} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.${feat}.bed unmapped
   """
 }
 
@@ -131,22 +127,20 @@ if( params.bedFile != null ){
       publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
-      file(txp_just) from just_txp_bed
-      file(exon_just) from just_exon_bed
+      file(feat_just) from just_feat_bed
       file(bed_over) from Channel.fromPath( "${params.bedFile}" )
       val(vers) from vers_mane_2
+      val(feat) from feat_mane_2
 
       output:
-      tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into complete
+      file("*.overlap.MANE.${vers}.${feat}.bed") into complete
 
       script:
       def bedname = "${bed_over}".split('\\.')[0]
       """
       ##overlap
-      perl ${workflow.projectDir}/assets/pover.pl ${txp_just} ${bed_over} 1
-      uniq 1 > ${bedname}.GRCh38.overlap.MANE.${vers}.transcript.bed
-      perl ${workflow.projectDir}/assets/pover.pl ${exon_just} ${bed_over} 1
-      uniq 1 > ${bedname}.GRCh38.overlap.MANE.${vers}.exon.bed
+      perl ${workflow.projectDir}/assets/pover.pl ${feat_just} ${bed_over} 1
+      uniq 1 > ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed
       rm 1
       """
     }
@@ -156,44 +150,20 @@ if( params.bedFile != null ){
       publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
-      file(txp_lift) from lifted_txp_bed
-      file(exon_lift) from lifted_exon_bed
+      file(feat_just) from just_feat_bed
       file(bed_over) from Channel.fromPath( "${params.bedFile}" )
       val(vers) from vers_mane_2
+      val(feat) from feat_mane_2
 
       output:
-      tuple file("*.overlap.MANE.${vers}.transcript.bed"), file("*.overlap.MANE.${vers}.exon.bed") into complete
+      file("*.overlap.MANE.${vers}.${feat}.bed") into complete
 
       script:
       def bedname = "${bed_over}".split('\\.')[0]
       """
       ##overlap
-      perl ${workflow.projectDir}/assets/pover.pl ${txp_lift} ${bed_over} 1
-      uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.transcript.bed
-      perl ${workflow.projectDir}/assets/pover.pl ${exon_lift} ${bed_over} 1
-      uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.exon.bed
-      rm 1
-      """
-    }
-  }
-
-  if( params.combine != null ){
-    process CombineET {
-      label 'process_low'
-      publishDir "${params.outDir}/bed", mode: "copy"
-
-      input:
-      tuple file(txp_com), file(exon_com) from complete
-
-      output:
-      file('*') into completed
-
-      script:
-      def comname = "${exon_com}".replace('exon', 'txps_exon')
-      """
-      ##overlap
-      perl ${workflow.projectDir}/assets/pcomb.pl ${txp_com} ${exon_com} 1
-      uniq 1 > ${comname}
+      perl ${workflow.projectDir}/assets/pover.pl ${feat_lift} ${bed_over} 1
+      uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.${feat}.bed
       rm 1
       """
     }
