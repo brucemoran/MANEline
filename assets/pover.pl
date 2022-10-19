@@ -7,7 +7,7 @@ open(BED, $ARGV[0]);
 my %regions;
 while(<BED>){
     chomp;
-    my @sp=split(/\t/);
+    my @sp=split(/\t/, 4);
     push(@{$regions{$sp[0]}},"$sp[1]\t$sp[2]\t$sp[3]");
 }
 close BED;
