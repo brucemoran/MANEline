@@ -99,7 +99,7 @@ process Liftover {
   publishDir "${params.outDir}/bed", mode: "copy"
 
   input:
-  tuple file(exon_bed) from feat_bed
+  file(exon_bed) from feat_bed
   val(vers) from vers_mane_1
 
   output:
