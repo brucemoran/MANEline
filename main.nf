@@ -58,10 +58,10 @@ process Download {
 
   label 'process_low'
   publishDir "${params.outDir}/download", mode: "copy"
-
+  echo true
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
-  file('Homo_sapiens.GRCh37.cds.all.fa.gz') into fagz_37 file('Homo_sapiens.GRCh38.cds.all.fa.gz') into fagz_38
+  //tuple file('Homo_sapiens.GRCh37.cds.all.fa.gz'), file('Homo_sapiens.GRCh38.cds.all.fa.gz') into fagzs
   file('vers.txt') into vers_get
   file('feat.txt') into feat_get
 
@@ -78,6 +78,7 @@ process Download {
   echo ${params.feature} > feat.txt
   wget ${fagz37}
   wget ${fagz38}
+  ls -l 
   """
 }
 
