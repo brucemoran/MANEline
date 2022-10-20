@@ -150,7 +150,7 @@ if( params.bedFile != null ){
     input:
     tuple file(feat_lift), file(txps_bed) from lift_feat_bed
     file(bed_over) from Channel.fromPath( "${params.bedFile}" )
-    tuple file(fagz_37), file(fagz_38) from fagzs
+    //tuple file(fagz_37), file(fagz_38) from fagzs
     val(vers) from vers_mane_2
     val(feat) from feat_mane_2
 
