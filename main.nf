@@ -163,7 +163,7 @@ if( params.bedFile != null ){
     def bedname = "${bed_over}".replace('\\.bed','')
     """
     ##overlap
-    perl ${workflow.projectDir}/assets/pover.pl ${feat_lift} ${bed_over} 1
+    perl ${workflow.projectDir}/assets/pover.pl ${exon_lift} ${bed_over} 1
     uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.exon.bed
     rm 1
 
@@ -181,7 +181,7 @@ if( params.bedFile != null ){
       val(feat) from feat_mane_3
 
       output:
-      tuple file(bed_ass), file(bed_in), file(txps_lift), file(exon_lift), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_asss
+      tuple file(bed_ass), file(bed_in), file(txps_lift), file(exon_lift), file("${bedname}") into sendmail_asss
 
       script:
       def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
