@@ -137,7 +137,8 @@ process Liftover {
   ##lift
   echo "nameserver 8.8.8.8" > /tmp/resolv.conf
   wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
-  liftOver ${txps_bed} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.exon.bed unmapped
+  liftOver ${txps_bed} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.txps.bed unmapped
+  liftOver ${exon_bed} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.exon.bed unmapped
   """
 }
 
@@ -160,7 +161,7 @@ if( params.bedFile != null ){
     val(feat) into feat_mane_3
 
     script:
-    def bedname = "${bed_over}".split('\\.')[0]
+    def bedname = "${bed_over}".replace('\\.bed','')
     """
     ##overlap
     perl ${workflow.projectDir}/assets/pover.pl ${feat_lift} ${bed_over} 1
@@ -184,13 +185,13 @@ if( params.bedFile != null ){
       tuple file(bed_ass), file(bed_in), file(bed_lift), file(txps_bed), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_asss
 
       script:
-      def bedname = "${bed_ass}".split('\\.')[0]
+      def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
       """
       ##count total fields as liftOver needs to know this
       LC=\$(head -n5 ${bed_ass} | tail -n1 | awk -F'\t' '{ print NF-2 }')
       echo "nameserver 8.8.8.8" > /tmp/resolv.conf
       wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
-      liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed unmapped
+      liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname} unmapped
       """
     }
     sendmail_asss.mix(sendmail_mane).set { sendmail_beds }

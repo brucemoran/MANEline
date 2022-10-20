@@ -4,40 +4,35 @@
 use strict;
 use warnings;
 
-open(BED, $ARGV[0]);
-my %txps;
-while(<BED>){
-  chomp;
-  if($_!~m/\t/){next;}
-  my @sp = split(/\s+/, $_, 4);
-  my @an = split(/[;\s]/, $sp[3]);
-  for my $k(@an){
-    if($k=~m/^ENST/){
-      push(@{$txps{$k}},"$sp[0]\t$sp[1]\t$sp[2]\t" . join("\t", @an));
-    }
-  }
-}
-close BED;
-print "User bed read...\n";
-
 ##BED from GTF from MANE to allow finding variants as this has the
-open(MNBD, $ARGV[1]);
+open(MNBD, $ARGV[0]);
 my %mpos;
 while(<MNBD>){
   chomp;
   if($_!~m/\t/){next;}
   my @sp = split(/[;\s]/, $_, 4);
   my @an = split(/;/, $sp[3]);
-  if(exists $txps{$an[3]}){
-    ##appends the genomic location of the transcript
-    for my $bd(@{$txps{$an[3]}}){
-      push(@{$txps{$an[3]}}, $bd . "$sp[0]\t$sp[1]\t$sp[2]");
-      print $bd . "\t$sp[0]:$sp[1]-$sp[2]\n";
-    }
-  }
+  push(@{$mpos{"$an[3]"}}, "$sp[0]\t$sp[1]\t$sp[2]");
 }
 close MNBD;
-print "MANE bed read...\n";
+my $lines = scalar keys %mpos;
+print "MANE bed read $lines transcripts...\n";
+
+open(BED, $ARGV[1]);
+my %txps;
+while(<BED>){
+  chomp;
+  if($_!~m/\t/){next;}
+  my @sp = split(/\s+/, $_, 4);
+  my @an = split(/[;\s]/, $sp[3]);
+  print "$an[3]\t$an[4] -> @an\n";
+  push(@{$txps{"$sp[0]\t$sp[1]\t$sp[2]\t$an[3]\t$an[4]"}}, "$sp[0]\t$sp[1]\t$sp[2]\t" . join("\t", @an));
+}
+close BED;
+$lines = scalar keys %txps;
+print "User bed read $lines lines...\n";
+
+
 
 open(FAGZ, "gunzip -c $ARGV[2]|");
 #open(OUT, ">$ARGV[3]");
