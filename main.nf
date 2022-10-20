@@ -61,7 +61,7 @@ process Download {
 
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
-  file("Homo_sapiens.GRCh37.cds.all.fa.gz") into fagz_37 file("Homo_sapiens.GRCh38.cds.all.fa.gz") into fagz_38
+  file('Homo_sapiens.GRCh37.cds.all.fa.gz') into fagz_37 file('Homo_sapiens.GRCh38.cds.all.fa.gz') into fagz_38
   file('vers.txt') into vers_get
   file('feat.txt') into feat_get
 
