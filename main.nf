@@ -44,10 +44,6 @@ if (params.help) exit 0, helpMessage()
 if(params.runID == null){
   exit 1, "Please specify --runID"
 }
-//require correct feature selection
-if(params.feature != "txps_exon" && params.feature != "transcript" && params.feature != "exon"){
-  exit 1, "Please use one of --feature exon | transcript | txps_exon"
-}
 
 //Get GRCh38 (only assembly available) MANE GTF and summary files based on input versions required
 process Download {
