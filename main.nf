@@ -58,10 +58,10 @@ process Download {
 
   label 'process_low'
   publishDir "${params.outDir}/download", mode: "copy"
-  echo true
+
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
-  //tuple file('Homo_sapiens.GRCh37.cds.all.fa.gz'), file('Homo_sapiens.GRCh38.cds.all.fa.gz') into fagzs
+  tuple file('Homo_sapiens.GRCh37.cds.all.fa.gz'), file('Homo_sapiens.GRCh38.cds.all.fa.gz') into fagzs
   file('vers.txt') into vers_get
   file('feat.txt') into feat_get
 
@@ -78,7 +78,6 @@ process Download {
   echo ${params.feature} > feat.txt
   wget ${fagz37}
   wget ${fagz38}
-  ls -l
   """
 }
 
@@ -128,7 +127,7 @@ process Liftover {
   val(feat) from feat_mane_1
 
   output:
-  tuple file("GRCh37.MANE.${vers}.exon.bed"), file(txps_bed) into lift_feat_bed
+  tuple file("GRCh37.MANE.${vers}.txps.bed"), file("GRCh37.MANE.${vers}.exon.bed") into lift_feat_bed
   val(vers) into vers_mane_2
   val(feat) into feat_mane_2
 
@@ -149,9 +148,9 @@ if( params.bedFile != null ){
     publishDir "${params.outDir}/bed", mode: "copy"
 
     input:
-    tuple file(feat_lift), file(txps_bed) from lift_feat_bed
+    tuple file(txps_lift), file(exon_lift) from lift_feat_bed
     file(bed_over) from Channel.fromPath( "${params.bedFile}" )
-    //tuple file(fagz_37), file(fagz_38) from fagzs
+    tuple file(fagz_37), file(fagz_38) from fagzs
     val(vers) from vers_mane_2
     val(feat) from feat_mane_2
 
@@ -188,7 +187,7 @@ if( params.bedFile != null ){
       def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
       """
       ##count total fields as liftOver needs to know this
-      LC=\$(head -n5 ${bed_ass} | tail -n1 | awk -F'\t' '{ print NF-2 }')
+      LC=\$(head -n5 ${bed_ass} | tail -n1 | awk -F"\\t" '{ print NF-2 }')
       echo "nameserver 8.8.8.8" > /tmp/resolv.conf
       wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
       liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname} unmapped
