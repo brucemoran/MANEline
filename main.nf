@@ -68,14 +68,16 @@ process Download {
   script:
   def mane_base = params.mane_base
   def mane_vers = params.mane_version == "current" ? "current" : "release_" + params.mane_version
+  def fagz37 = params.cdsFagz37
+  def fagz38 = params.cdsFagz38
   """
   VERS=\$(curl -l ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/${mane_vers}/ | grep summary | cut -d "." -f3,4)
   wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.ensembl_genomic.gtf.gz
   wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.summary.txt.gz
   echo \$VERS > vers.txt
   echo ${params.feature} > feat.txt
-  wget ${params.cdsFagz37}
-  wget ${params.cdsFagz38}
+  wget ${fagz37}
+  wget ${fagz38}
   """
 }
 
