@@ -36,7 +36,10 @@ def helpMessage() {
     --bedAssembly   [str]     One of GRCh37, GRCh38 indicating the assembly used in --bedFile.
                               Default: null.
 
-    --bedOtherAss [bool]    Return the bedFile with the other assembly lifted over? Default: true.
+    --bedOtherAss   [bool]    Return the bedFile with the other assembly lifted over? Default: true.
+
+    --cds_fagz       [bool]    If your input BED has REF=x;OBS=y in a field, this option makes the relevant HGVS entries and adds as a separate field.
+
     """.stripIndent()
 }
 
@@ -58,6 +61,7 @@ process Download {
 
   output:
   tuple file("*.ensembl_genomic.gtf.gz"), file("*.summary.txt.gz") into ( bed_gtf, liftover )
+  file("Homo_sapiens.GRCh37.cds.all.fa.gz") into fagz_37 file("Homo_sapiens.GRCh38.cds.all.fa.gz") into fagz_38
   file('vers.txt') into vers_get
   file('feat.txt') into feat_get
 
@@ -70,6 +74,8 @@ process Download {
   wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.summary.txt.gz
   echo \$VERS > vers.txt
   echo ${params.feature} > feat.txt
+  wget ${params.cdsFagz37}
+  wget ${params.cdsFagz38}
   """
 }
 
@@ -89,24 +95,21 @@ process GtfBed {
   val(feat) from feat_mane
 
   output:
-  file("GRCh38.MANE.${vers}.${feat}.bed") into ( feat_bed, just_feat_bed, sendmail_mane )
+  tuple file("GRCh38.MANE.${vers}.txps.bed"), file("GRCh38.MANE.${vers}.exon.bed") into ( feat_bed, just_feat_bed, sendmail_mane )
   val(vers) into vers_mane_1
   val(feat) into feat_mane_1
 
   script:
   """
   gunzip -c ${gtf_gz} | sed 's/\\"//g' | sed 's/;//g' | \\
-    if [[ ${feat} == "transcript" ]]; then
-      perl -ane 'chomp; if(\$F[2] eq "transcript"){
-      print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[23];\$F[25]\\n";}'
-    elif [[ ${feat} == "exon" ]]; then
-      perl -ane 'chomp; if(\$F[2] eq "exon"){
-      print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[11];\$F[23];exon_\$F[21]\\n";}'
-    else
-      perl -ane 'chomp; if(\$F[2] eq "exon"){
-      print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[27];\$F[29];\$F[23];exon_\$F[21]\\n";}'
-    fi | \\
-  sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.${feat}.bed
+    perl -ane 'chomp; if(\$F[2] eq "transcript"){
+    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[23];\$F[25]\\n";}' | \\
+  sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.txps.bed
+
+  gunzip -c ${gtf_gz} | sed 's/\\"//g' | sed 's/;//g' | \\
+    perl -ane 'chomp; if(\$F[2] eq "exon"){
+    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[27];\$F[29];\$F[23];exon_\$F[21]\\n";}' | \\
+    sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.exon.bed
   """
 }
 
@@ -117,12 +120,12 @@ process Liftover {
   publishDir "${params.outDir}/bed", mode: "copy"
 
   input:
-  file(bed_feat) from feat_bed
+  tuple file(txps_bed), file(exon_bed) from feat_bed
   val(vers) from vers_mane_1
   val(feat) from feat_mane_1
 
   output:
-  file("GRCh37.MANE.${vers}.${feat}.bed") into lift_feat_bed
+  tuple file("GRCh37.MANE.${vers}.exon.bed"), file(txps_bed) into lift_feat_bed
   val(vers) into vers_mane_2
   val(feat) into feat_mane_2
 
@@ -131,116 +134,68 @@ process Liftover {
   ##lift
   echo "nameserver 8.8.8.8" > /tmp/resolv.conf
   wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
-  liftOver ${bed_feat} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.${feat}.bed unmapped
+  liftOver ${txps_bed} hg38ToHg19.over.chain.gz GRCh37.MANE.${vers}.exon.bed unmapped
   """
 }
 
 //if a BED is supplied overlapp the created Liftover
 if( params.bedFile != null ){
-  if(params.bedAssembly == "GRCh38" ){
-    process Overlap38 {
+  process Overlap37 {
+    label 'process_low'
+    publishDir "${params.outDir}/bed", mode: "copy"
+
+    input:
+    tuple file(feat_lift), file(txps_bed) from lift_feat_bed
+    file(bed_over) from Channel.fromPath( "${params.bedFile}" )
+    file(fagz) from fagz_37
+    val(vers) from vers_mane_2
+    val(feat) from feat_mane_2
+
+    output:
+    tuple file("*.overlap.MANE.${vers}.exon.bed"), file(bed_over), file(feat_lift), file(txps_bed) into sendmail_over
+    val(vers) into vers_mane_3
+    val(feat) into feat_mane_3
+
+    script:
+    def bedname = "${bed_over}".split('\\.')[0]
+    """
+    ##overlap
+    perl ${workflow.projectDir}/assets/pover.pl ${feat_lift} ${bed_over} 1
+    uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.exon.bed
+    rm 1
+
+    #perl fabed.pl ${bedname}.GRCh37.overlap.MANE.${vers}.exon.bed txps_bed
+    """
+  }
+  if(params.bedOtherAss){
+    process OtherAss37 {
       label 'process_low'
       publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
-      file(feat_just) from just_feat_bed
-      file(bed_over) from Channel.fromPath( "${params.bedFile}" )
-      val(vers) from vers_mane_2
-      val(feat) from feat_mane_2
+      tuple file(bed_ass), file(bed_in), file(bed_lift), file(txps_bed) from sendmail_over
+      val(vers) from vers_mane_3
+      val(feat) from feat_mane_3
 
       output:
-      tuple file("*.overlap.MANE.${vers}.${feat}.bed"), file(bed_over), file(feat_just) into sendmail_over
+      tuple file(bed_ass), file(bed_in), file(bed_lift), file(txps_bed), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_asss
 
       script:
-      def bedname = "${bed_over}".split('\\.')[0]
+      def bedname = "${bed_ass}".split('\\.')[0]
       """
-      ##overlap
-      perl ${workflow.projectDir}/assets/pover.pl ${feat_just} ${bed_over} 1
-      uniq 1 > ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed
-      rm 1
+      ##count total fields as liftOver needs to know this
+      LC=\$(head -n5 ${bed_ass} | tail -n1 | awk -F'\t' '{ print NF-2 }')
+      echo "nameserver 8.8.8.8" > /tmp/resolv.conf
+      wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
+      liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed unmapped
       """
     }
-    if(params.bedOtherAss){
-      process OtherAss38 {
-        label 'process_low'
-        publishDir "${params.outDir}/bed", mode: "copy"
-
-        input:
-        tuple file(bed_ass), file(bed_in), file(bed_just) from sendmail_over
-        val(vers) from vers_mane_3
-        val(feat) from feat_mane_3
-
-        output:
-        tuple file(bed_ass), file(bed_in), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_ass
-
-        script:
-        def bedname = "${bed_ass}".split('\\.')[0]
-        """
-        ##count total fields as liftOver needs to know this
-        LC=\$(head -n5 ${bed_ass} | tail -n1 | awk -F'\t' '{ print NF-2 }')
-        echo "nameserver 8.8.8.8" > /tmp/resolv.conf
-        wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz
-        liftOver -bedPlus=\$LC ${bed_ass} hg38ToHg19.over.chain.gz ${bedname}.GRCh37.overlap.MANE.${vers}.${feat}.bed unmapped
-        """
-      }
-      sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
-    } else {
-      sendmail_over.mix(sendmail_mane).set { sendmail_beds }
-    }
+    sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
   } else {
-    process Overlap37 {
-      label 'process_low'
-      publishDir "${params.outDir}/bed", mode: "copy"
-
-      input:
-      file(feat_lift) from lift_feat_bed
-      file(bed_over) from Channel.fromPath( "${params.bedFile}" )
-      val(vers) from vers_mane_2
-      val(feat) from feat_mane_2
-
-      output:
-      tuple file("*.overlap.MANE.${vers}.${feat}.bed"), file(bed_over), file(feat_lift) into sendmail_over
-      val(vers) into vers_mane_3
-      val(feat) into feat_mane_3
-
-      script:
-      def bedname = "${bed_over}".split('\\.')[0]
-      """
-      ##overlap
-      perl ${workflow.projectDir}/assets/pover.pl ${feat_lift} ${bed_over} 1
-      uniq 1 > ${bedname}.GRCh37.overlap.MANE.${vers}.${feat}.bed
-      rm 1
-      """
-    }
-    if(params.bedOtherAss){
-      process OtherAss37 {
-        label 'process_low'
-        publishDir "${params.outDir}/bed", mode: "copy"
-
-        input:
-        tuple file(bed_ass), file(bed_in), file(bed_lift) from sendmail_over
-        val(vers) from vers_mane_3
-        val(feat) from feat_mane_3
-
-        output:
-        tuple file(bed_ass), file(bed_in), file(bed_lift), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_asss
-
-        script:
-        def bedname = "${bed_ass}".split('\\.')[0]
-        """
-        ##count total fields as liftOver needs to know this
-        LC=\$(head -n5 ${bed_ass} | tail -n1 | awk -F'\t' '{ print NF-2 }')
-        echo "nameserver 8.8.8.8" > /tmp/resolv.conf
-        wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
-        liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname}.GRCh38.overlap.MANE.${vers}.${feat}.bed unmapped
-        """
-      }
-      sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
-    } else {
-      sendmail_over.mix(sendmail_mane).set { sendmail_beds }
-    }
+    sendmail_over.mix(sendmail_mane).set { sendmail_beds }
   }
 }
+
 
 // ZIP for sending on sendmail
 process zipup {
