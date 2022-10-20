@@ -155,7 +155,7 @@ if( params.bedFile != null ){
     val(feat) from feat_mane_2
 
     output:
-    tuple file("*.overlap.MANE.${vers}.exon.bed"), file(bed_over), file(feat_lift), file(txps_bed) into sendmail_over
+    tuple file("*.overlap.MANE.${vers}.exon.bed"), file(bed_over), file(txps_lift), file(exon_lift) into sendmail_over
     val(vers) into vers_mane_3
     val(feat) into feat_mane_3
 
@@ -176,12 +176,12 @@ if( params.bedFile != null ){
       publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
-      tuple file(bed_ass), file(bed_in), file(bed_lift), file(txps_bed) from sendmail_over
+      tuple file(bed_ass), file(bed_in), file(txps_lift), file(exon_lift) from sendmail_over
       val(vers) from vers_mane_3
       val(feat) from feat_mane_3
 
       output:
-      tuple file(bed_ass), file(bed_in), file(bed_lift), file(txps_bed), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_asss
+      tuple file(bed_ass), file(bed_in), file(txps_lift), file(exon_lift), file("*.overlap.MANE.${vers}.${feat}.bed") into sendmail_asss
 
       script:
       def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
