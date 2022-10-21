@@ -10,7 +10,7 @@ while(<GTF>){
   chomp;
   my @sp=split("\t", $_, 9);
   if($sp[2] eq "exon"){
-    my $out="$sp[0]\t$sp[3]\t$sp[4]\t";
+    my $out="$sp[0]\t$sp[3]\t$sp[4]\t$sp[6];";
     my @an=split(";", $sp[8]);
     my %ann;
     foreach my $k(@an){
