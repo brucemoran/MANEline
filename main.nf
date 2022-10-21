@@ -143,7 +143,7 @@ if( params.bedFile != null ){
       val(vers) from vers_mane_3
 
       output:
-      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_ass}") into sendmail_asss
+      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}") into sendmail_asss
 
       script:
       def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
