@@ -66,7 +66,7 @@ process Download {
   """
 }
 
-//map version and feature
+//map version
 vers_get.map { it.text.strip() }.set{ vers_mane }
 
 //parse the GTF to BED
@@ -127,14 +127,13 @@ if( params.bedFile != null ){
     val(vers) from vers_mane_2
 
     output:
-    tuple file("GRCh37.MANE.${vers}.exon.overlap.${bedname}.bed"), file(bed_user), file(exon_lift) into sendmail_over
+    tuple file("GRCh37.MANE.${vers}.exon.overlap.${bed_user}"), file(bed_user), file(exon_lift) into sendmail_over
     val(vers) into vers_mane_3
 
     script:
-    def bedname = "${bed_user}".replace('\\.bed','')
     """
     ##if bed_user overlaps, return all exons for the gene overlapped
-    perl ${workflow.projectDir}/assets/pover.pl ${exon_lift} ${bed_user}  GRCh37.MANE.${vers}.exon.overlap.${bedname}.bed
+    perl ${workflow.projectDir}/assets/pover.pl ${exon_lift} ${bed_user}  GRCh37.MANE.${vers}.exon.overlap.${bed_user}
     """
   }
   if(params.bedOtherAss){
