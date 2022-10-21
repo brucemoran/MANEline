@@ -85,10 +85,7 @@ process GtfBed {
 
   script:
   """
-  gunzip -c ${gtf_gz} | sed 's/\\"//g' | sed 's/;//g' | \\
-    perl -ane 'chomp; if(\$F[2] eq "exon"){
-    print "\$F[0]\\t\$F[3]\\t\$F[4]\\t\$F[6];\$F[15];\$F[9];\$F[11];\$F[27];\$F[29];\$F[23];exon_\$F[21]\\n";}' | \\
-    sed 's/RefSeq://g' >> GRCh38.MANE.${vers}.exon.bed
+  perl ${workflow.projectDir}/assets/pexon.pl ${gtf_gz} GRCh38.MANE.${vers}.exon.bed
   """
 }
 
