@@ -143,7 +143,7 @@ if( params.bedFile != null ){
       val(vers) from vers_mane_3
 
       output:
-      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}") into 37_38
+      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}") into bed_37_38
 
       script:
       def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
@@ -163,7 +163,7 @@ if( params.bedFile != null ){
       publishDir "${params.outDir}/bed", mode: "copy"
 
       input:
-      tuple file(bed_ass), file(bed_in), file(exon_37), file(exon_38) from 37_38
+      tuple file(bed_ass), file(bed_in), file(exon_37), file(exon_38) from bed_37_38
       val(vers) from vers_mane_3
 
       output:
