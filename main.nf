@@ -143,7 +143,7 @@ if( params.bedFile != null ){
       val(vers) from vers_mane_3
 
       output:
-      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}") into sendmail_asss
+      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}"), file('SVUHMolReport_exns_postgresql.csv') into sendmail_asss
 
       script:
       def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
@@ -153,6 +153,9 @@ if( params.bedFile != null ){
       echo "nameserver 8.8.8.8" > /tmp/resolv.conf
       wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
       liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname} unmapped
+
+      ##parse into table format desired
+      perl ${workflow.projectDir}/assets/ptabl.pl ${bed_ass} ${bedname} SVUHMolReport_exns_postgresql.csv
       """
     }
     sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
