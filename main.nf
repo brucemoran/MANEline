@@ -151,9 +151,6 @@ if( params.bedFile != null ){
       echo "nameserver 8.8.8.8" > /tmp/resolv.conf
       wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz
       liftOver -bedPlus=\$LC ${bed_ass} hg19ToHg38.over.chain.gz ${bedname} unmapped
-
-      ##parse into table format desired
-      perl ${workflow.projectDir}/assets/ptabl.pl ${bed_ass} ${bedname} SVUHMolReport_exns_postgresql.csv
       """
     }
     process SVUHMolReport37 {
