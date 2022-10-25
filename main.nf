@@ -125,7 +125,6 @@ if( params.bedFile != null ){
 
     output:
     tuple file("GRCh37.MANE.${vers}.exon.overlap.${bed_user}"), file(bed_user), file(exon_lift) into sendmail_over
-    val(vers) into vers_mane_3
 
     script:
     """
@@ -140,7 +139,6 @@ if( params.bedFile != null ){
 
       input:
       tuple file(bed_ass), file(bed_in), file(exon_lift) from sendmail_over
-      val(vers) from vers_mane_3
 
       output:
       tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}") into bed_37_38
@@ -164,7 +162,6 @@ if( params.bedFile != null ){
 
       input:
       tuple file(bed_ass), file(bed_in), file(exon_37), file(exon_38) from bed_37_38
-      val(vers) from vers_mane_3
 
       output:
       tuple file(bed_ass), file(bed_in), file(exon_37), file(exon_38), file('SVUHMolReport_exns_postgresql.csv') into sendmail_asss
