@@ -143,7 +143,7 @@ if( params.bedFile != null ){
       val(vers) from vers_mane_3
 
       output:
-      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}"), file('SVUHMolReport_exns_postgresql.csv') into sendmail_asss
+      tuple file(bed_ass), file(bed_in), file(exon_lift), file("GRCh38*.${bed_in}") into 37_38
 
       script:
       def bedname = "${bed_ass}".replace('GRCh37','GRCh38')
@@ -156,6 +156,23 @@ if( params.bedFile != null ){
 
       ##parse into table format desired
       perl ${workflow.projectDir}/assets/ptabl.pl ${bed_ass} ${bedname} SVUHMolReport_exns_postgresql.csv
+      """
+    }
+    process SVUHMolReport37 {
+      label 'process_low'
+      publishDir "${params.outDir}/bed", mode: "copy"
+
+      input:
+      tuple file(bed_ass), file(bed_in), file(exon_37), file(exon_38) from 37_38
+      val(vers) from vers_mane_3
+
+      output:
+      tuple file(bed_ass), file(bed_in), file(exon_37), file(exon_38), file('SVUHMolReport_exns_postgresql.csv') into sendmail_asss
+
+      script:
+      """
+      ##parse into table format desired
+      perl ${workflow.projectDir}/assets/ptabl.pl ${exon_37} ${exon_38} SVUHMolReport_exns_postgresql.csv
       """
     }
     sendmail_asss.mix(sendmail_mane).set { sendmail_beds }
