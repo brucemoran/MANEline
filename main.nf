@@ -5,7 +5,6 @@ nextflow.enable.dsl=2
 /*********************************************************************************
  * PARAMETERS
  *********************************************************************************/
-params.scripts    = '/Users/brucemoran/Library/CloudStorage/GoogleDrive-bruce.moran@gmail.com/My\\ Drive/scripts/Nextflow/projects/MANEline/scripts/'
 params.ENST_list  = 'data/Oncomine_Focus_designs_063020_Reference.enst.txt'  // Path to the file containing old GRCh37 ENST IDs (one per line)
 params.mane_gtf   = 'data/MANE.GRCh38.v1.2.ensembl_genomic.gtf.gz' // Path to the MANE GTF file
 params.outdir     = 'results'                    // Output directory
@@ -56,7 +55,7 @@ process parseManeGtf {
 
     script:
     """
-    Rscript ${params.scripts}/parse_mane.R \\
+    Rscript ${workflow.projectDir}/assets/parse_mane.R \\
         --gtf_file ${gtf_file} \\
         --output mane_mapping.tsv
     """
@@ -83,7 +82,7 @@ process convertIds {
 
     script:
     """
-    Rscript ${params.scripts}/convert_ids.R \\
+    Rscript ${workflow.projectDir}/assets/convert_ids.R \\
         --input_ids ${enst_list_file} \\
         --output converted_ids.tsv \\
         --batchSize ${params.batchSize}
