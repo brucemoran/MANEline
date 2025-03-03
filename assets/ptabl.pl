@@ -14,7 +14,7 @@ use warnings;
 # enst VARCHAR ( 100 ) NOT NULL,
 # rfid VARCHAR ( 100 ) NOT NULL,
 # ensp VARCHAR ( 100 ) NOT NULL,
-# ense VARCHAR ( 100 ) NOT NULL
+# ense VARCHAR ( 100 ) NOT NULL,
 # exon VARCHAR ( 100 ) NOT NULL
 
 open(B37, $ARGV[0]);
