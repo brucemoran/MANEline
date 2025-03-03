@@ -28,6 +28,7 @@ close B37;
 
 open(B38, $ARGV[1]);
 open(OUT, ">$ARGV[2]");
+print OUT "chr,start_37,end_37,start_38,end_38,strand,gene,ensg,enst,rfid,ensp,ense,exon\n";
 while(<B38>){
   chomp;
   my ($chr,$str,$end,$anno)=split(/\t/, $_, 4);
