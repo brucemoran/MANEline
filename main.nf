@@ -89,8 +89,8 @@ process DLMANE {
     tuple path("*.ensembl_genomic.gtf.gz"), path("*.summary.txt.gz"), val(mane_vers)
 
     script:
-    def mane_base = params.mane_base
-    def mane_vers = params.mane_version == "current" ? "current" : "release_" + params.mane_version
+    mane_base = params.mane_base
+    mane_vers = params.mane_version == "current" ? "current" : "release_" + params.mane_version
     """
     VERS=\$(curl -l ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/${mane_vers}/ | grep summary | cut -d "." -f3,4)
     wget ${mane_base}/${mane_vers}/MANE.GRCh38.\$VERS.ensembl_genomic.gtf.gz
@@ -125,7 +125,7 @@ process LIFTOVER {
   tuple path(exon_bed), val(vers)
 
   output:
-  file("GRCh37.MANE.${vers}.exon.bed"), val(vers)
+  tuple path("GRCh37.MANE.${vers}.exon.bed"), val(vers)
 
   script:
   """
@@ -181,7 +181,7 @@ process REPORT37 {
     tuple path(bed_ass), path(bed_in), path(exon_37), path(exon_38)
 
     output:
-    file("${params.runID}.exns.csv")
+    path("${params.runID}.exns.csv")
 
     script:
     """
