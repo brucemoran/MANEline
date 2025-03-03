@@ -86,9 +86,7 @@ process DLMANE {
     val mane_vers
 
     output:
-    tuple path("*.ensembl_genomic.gtf.gz"), 
-          path("*.summary.txt.gz"), 
-          val(${mane_vers}) into ( bed_gtf, liftover )
+    tuple path("*.ensembl_genomic.gtf.gz"), path("*.summary.txt.gz"), val(mane_vers)
 
     script:
     def mane_base = params.mane_base
@@ -108,10 +106,10 @@ process GTFBED {
   publishDir "${params.outDir}/bed", mode: "copy"
 
   input:
-  tuple file(gtf_gz), file(sum_gtf), val(vers)
+  tuple path(gtf_gz), path(sum_gtf), val(vers)
 
   output:
-  file("GRCh38.MANE.${vers}.exon.bed"), val(vers) into ( just_feat_bed, sendmail_mane )
+  tuple path("GRCh38.MANE.${vers}.exon.bed"), val(vers)
 
   script:
   """
